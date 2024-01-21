@@ -24,6 +24,7 @@
 
 
 enum editorKey {
+  BACKSPACE = 127,
   ARROW_LEFT = 1000,
   ARROW_RIGHT,
   ARROW_UP,
@@ -202,6 +203,27 @@ void editorAppendRow(char *s, size_t len) {
   E.row[at].render = NULL;
   editorUpdateRow(&E.row[at]);
   E.numrows++;
+}
+
+
+void editorRowInsertChar(erow *row, int at, int c){
+  if (at < 0 || at >row->size) at = row->size;
+  row->chars = realloc(row->chars, row->size + 2);
+  memmove(&row->chars[at + 1], &row->chars[at], row->size -at +1);
+  row->size++;
+  row->chars[at]=c;
+  editorUpdateRow(row);
+}
+
+
+/* editor operations */
+
+void editorInsertChar(int c) {
+  if (E.cy == E.numrows){
+    editorAppendRow("",0);
+  }
+  editorRowInsertChar(&E.row[E.cy], E.cx,c);
+  E.cx++;
 }
 
 
@@ -406,6 +428,10 @@ void editorMoveCursor(int key) {
 void editorProcessKeypress() {
   int c = editorReadKey();
   switch (c) {
+    case '\r':
+    /* TODO */
+      break;
+
     case CTRL_KEY('q'):
       write(STDOUT_FILENO, "\x1b[2J", 4);
       write(STDOUT_FILENO, "\x1b[H", 3);
@@ -418,6 +444,13 @@ void editorProcessKeypress() {
       if (E.cy < E.numrows)
         E.cx = E.row[E.cy].size;
       break;
+    
+    case BACKSPACE:
+    case CTRL_KEY('h'):
+    case DEL_KEY:
+      /* TODO */
+      break;
+
     case PAGE_UP:
     case PAGE_DOWN:
       {
@@ -438,8 +471,16 @@ void editorProcessKeypress() {
     case ARROW_RIGHT:
       editorMoveCursor(c);
       break;
+    
+    case CTRL_KEY('l'):
+    case '\x1b':
+      break;
+
+    default:
+      editorInsertChar(c);
+      break;
   }
-}
+} 
 
 /*INIT*/
 
